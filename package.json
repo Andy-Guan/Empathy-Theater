@@ -1,0 +1,33 @@
+{
+    "name": "empathy-theater",
+    "version": "1.0.0",
+    "description": "AI Psychodrama Sandplay - Empathy Theater",
+    "scripts": {
+        "dev": "next dev -H 0.0.0.0 -p 7860",
+        "build": "next build",
+        "start": "next start -H 0.0.0.0 -p 7860",
+        "lint": "next lint"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "commonjs",
+    "dependencies": {
+        "@tailwindcss/postcss": "^4.1.18",
+        "next": "^14.2.35",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "zustand": "^5.0.10"
+    },
+    "devDependencies": {
+        "@types/node": "^25.1.0",
+        "@types/react": "^19.2.10",
+        "@types/react-dom": "^19.2.3",
+        "autoprefixer": "^10.4.23",
+        "eslint": "^9.39.2",
+        "eslint-config-next": "^16.1.6",
+        "postcss": "^8.5.6",
+        "tailwindcss": "^4.1.18",
+        "typescript": "^5.9.3"
+    }
+}

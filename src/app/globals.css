@@ -1,0 +1,582 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-pixel-blue: #4a90d9;
+  --color-pixel-gold: #f7c948;
+  --color-pixel-dark: #1a1a2e;
+  --color-pixel-cyan: #4ecdc4;
+  --color-pixel-coral: #ff6b6b;
+  --color-pixel-purple: #9b59b6;
+}
+
+:root {
+  --pixel-blue: #4a90d9;
+  --pixel-gold: #f7c948;
+  --pixel-dark: #1a1a2e;
+  --pixel-cyan: #4ecdc4;
+  --pixel-coral: #ff6b6b;
+  --pixel-purple: #9b59b6;
+}
+
+* {
+  image-rendering: pixelated;
+}
+
+body {
+  font-family: 'Press Start 2P', cursive;
+  background-color: var(--pixel-dark);
+  color: white;
+  min-height: 100vh;
+}
+
+/* Pixel Border Effect */
+.pixel-border {
+  position: relative;
+  background: var(--pixel-dark);
+  box-shadow:
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 4px 0 0 #000,
+    -4px -4px 0 0 #000,
+    4px -4px 0 0 #000,
+    -4px 4px 0 0 #000,
+    4px 4px 0 0 #000;
+}
+
+/* Pixel Button */
+.pixel-btn {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 14px;
+  padding: 14px 28px;
+  background: var(--pixel-blue);
+  color: white;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  box-shadow:
+    inset -4px -4px 0 0 #2a5a8a,
+    inset 4px 4px 0 0 #6ab0f9,
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 4px 0 0 #000;
+  transition: all 0.1s;
+}
+
+.pixel-btn:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset -4px -4px 0 0 #2a5a8a,
+    inset 4px 4px 0 0 #6ab0f9,
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 6px 0 0 #000;
+}
+
+.pixel-btn:active {
+  transform: translateY(2px);
+  box-shadow:
+    inset -4px -4px 0 0 #6ab0f9,
+    inset 4px 4px 0 0 #2a5a8a,
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 2px 0 0 #000;
+}
+
+.pixel-btn-gold {
+  background: var(--pixel-gold);
+  box-shadow:
+    inset -4px -4px 0 0 #c9a030,
+    inset 4px 4px 0 0 #ffe066,
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 4px 0 0 #000;
+  color: #1a1a2e;
+}
+
+.pixel-btn-purple {
+  background: var(--pixel-purple);
+  box-shadow:
+    inset -4px -4px 0 0 #7b4996,
+    inset 4px 4px 0 0 #bb79d6,
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 4px 0 0 #000;
+}
+
+.pixel-btn-coral {
+  background: var(--pixel-coral);
+  box-shadow:
+    inset -4px -4px 0 0 #d94b4b,
+    inset 4px 4px 0 0 #ff8b8b,
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 4px 0 0 #000;
+}
+
+/* Pixel Input */
+.pixel-input {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 14px;
+  padding: 14px 18px;
+  background: #2a2a4e;
+  color: white;
+  border: none;
+  outline: none;
+  box-shadow:
+    inset 4px 4px 0 0 #1a1a2e,
+    inset -4px -4px 0 0 #3a3a6e,
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 4px 0 0 #000;
+}
+
+.pixel-input:focus {
+  box-shadow:
+    inset 4px 4px 0 0 #1a1a2e,
+    inset -4px -4px 0 0 #3a3a6e,
+    -4px 0 0 0 var(--pixel-cyan),
+    4px 0 0 0 var(--pixel-cyan),
+    0 -4px 0 0 var(--pixel-cyan),
+    0 4px 0 0 var(--pixel-cyan);
+}
+
+.pixel-input::placeholder {
+  color: #6a6a8e;
+}
+
+/* Message Bubbles */
+.pixel-bubble {
+  position: relative;
+  padding: 14px 18px;
+  max-width: 80%;
+  word-wrap: break-word;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.pixel-bubble-user {
+  background: var(--pixel-cyan);
+  color: #1a1a2e;
+  margin-left: auto;
+  box-shadow:
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 4px 0 0 #000,
+    inset -4px -4px 0 0 #3ebdb4,
+    inset 4px 4px 0 0 #5efdf4;
+}
+
+.pixel-bubble-npc {
+  background: var(--pixel-coral);
+  color: white;
+  margin-right: auto;
+  box-shadow:
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 4px 0 0 #000,
+    inset -4px -4px 0 0 #d94b4b,
+    inset 4px 4px 0 0 #ff8b8b;
+}
+
+.pixel-bubble-reversed {
+  background: var(--pixel-purple);
+  color: white;
+  margin-left: auto;
+  box-shadow:
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 4px 0 0 #000,
+    inset -4px -4px 0 0 #7b4996,
+    inset 4px 4px 0 0 #bb79d6;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+/* Typing indicator */
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  padding: 8px 16px;
+}
+
+.typing-indicator span {
+  width: 8px;
+  height: 8px;
+  background: var(--pixel-coral);
+  animation: typing 1s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--pixel-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--pixel-blue);
+  box-shadow:
+    inset -2px -2px 0 0 #2a5a8a,
+    inset 2px 2px 0 0 #6ab0f9;
+}
+
+/* Reversed mode banner */
+.reversed-banner {
+  background: var(--pixel-purple);
+  padding: 14px;
+  text-align: center;
+  font-size: 14px;
+  animation: blink-border 1s infinite;
+  box-shadow:
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 4px 0 0 #000;
+}
+
+@keyframes blink-border {
+  0%, 100% { 
+    box-shadow:
+      -4px 0 0 0 var(--pixel-gold),
+      4px 0 0 0 var(--pixel-gold),
+      0 -4px 0 0 var(--pixel-gold),
+      0 4px 0 0 var(--pixel-gold);
+  }
+  50% { 
+    box-shadow:
+      -4px 0 0 0 #000,
+      4px 0 0 0 #000,
+      0 -4px 0 0 #000,
+      0 4px 0 0 #000;
+  }
+}
+
+/* Loading spinner */
+.pixel-loader {
+  width: 48px;
+  height: 48px;
+  position: relative;
+}
+
+.pixel-loader::before,
+.pixel-loader::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: var(--pixel-cyan);
+  animation: pixelLoad 1s infinite;
+}
+
+.pixel-loader::after {
+  animation-delay: 0.5s;
+  background: var(--pixel-coral);
+}
+
+@keyframes pixelLoad {
+  0% { top: 0; left: 0; }
+  25% { top: 0; left: 32px; }
+  50% { top: 32px; left: 32px; }
+  75% { top: 32px; left: 0; }
+  100% { top: 0; left: 0; }
+}
+
+/* Card/Panel */
+.pixel-panel {
+  background: #2a2a4e;
+  padding: 20px;
+  box-shadow:
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 4px 0 0 #000,
+    inset -4px -4px 0 0 #1a1a2e,
+    inset 4px 4px 0 0 #3a3a6e;
+}
+
+/* Title styling */
+.pixel-title {
+  font-size: 24px;
+  text-shadow:
+    4px 4px 0 var(--pixel-purple),
+    -4px -4px 0 var(--pixel-cyan);
+  margin-bottom: 24px;
+}
+
+/* Textarea */
+.pixel-textarea {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 14px;
+  padding: 14px 18px;
+  background: #2a2a4e;
+  color: white;
+  border: none;
+  outline: none;
+  resize: none;
+  min-height: 120px;
+  box-shadow:
+    inset 4px 4px 0 0 #1a1a2e,
+    inset -4px -4px 0 0 #3a3a6e,
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 4px 0 0 #000;
+}
+
+.pixel-textarea:focus {
+  box-shadow:
+    inset 4px 4px 0 0 #1a1a2e,
+    inset -4px -4px 0 0 #3a3a6e,
+    -4px 0 0 0 var(--pixel-cyan),
+    4px 0 0 0 var(--pixel-cyan),
+    0 -4px 0 0 var(--pixel-cyan),
+    0 4px 0 0 var(--pixel-cyan);
+}
+
+/* ========================================
+   Galgame风格 - NPC立绘
+   ======================================== */
+.npc-portrait {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: portraitFadeIn 0.5s ease-out;
+}
+
+.npc-portrait-visible {
+  opacity: 1;
+}
+
+.npc-portrait-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.npc-portrait-image {
+  max-height: 50vh;
+  max-width: 80vw;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.5));
+  image-rendering: pixelated;
+}
+
+.npc-portrait-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(42, 42, 78, 0.8);
+  padding: 32px 48px;
+  box-shadow:
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 4px 0 0 #000;
+}
+
+.npc-portrait-emoji {
+  font-size: 8rem;
+  line-height: 1;
+  margin-bottom: 16px;
+}
+
+.npc-portrait-loading {
+  margin-top: 8px;
+}
+
+.npc-portrait-name {
+  position: absolute;
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--pixel-dark);
+  padding: 8px 16px;
+  font-size: 12px;
+  color: var(--pixel-gold);
+  white-space: nowrap;
+  box-shadow:
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 4px 0 0 #000;
+}
+
+@keyframes portraitFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   Galgame风格 - 底部对话框
+   ======================================== */
+.dialogue-box {
+  position: relative;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  padding: 16px 24px;
+  border-top: 4px solid var(--pixel-cyan);
+  min-height: 180px;
+}
+
+.dialogue-speaker {
+  margin-bottom: 8px;
+}
+
+.dialogue-speaker-name {
+  font-size: 14px;
+  font-family: 'Press Start 2P', cursive;
+  padding: 4px 12px;
+  background: rgba(26, 26, 46, 0.9);
+  display: inline-block;
+  box-shadow:
+    -2px 0 0 0 #000,
+    2px 0 0 0 #000,
+    0 -2px 0 0 #000,
+    0 2px 0 0 #000;
+}
+
+.dialogue-content {
+  background: rgba(42, 42, 78, 0.6);
+  padding: 16px 20px;
+  min-height: 60px;
+  margin-bottom: 12px;
+  box-shadow:
+    inset 2px 2px 0 0 rgba(0, 0, 0, 0.3),
+    inset -2px -2px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+.dialogue-text {
+  font-size: 14px;
+  line-height: 2;
+  color: white;
+  word-wrap: break-word;
+}
+
+.dialogue-input-area {
+  display: flex;
+  gap: 12px;
+}
+
+.dialogue-input {
+  flex: 1;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 12px;
+  padding: 12px 16px;
+  background: #2a2a4e;
+  color: white;
+  border: none;
+  outline: none;
+  box-shadow:
+    inset 2px 2px 0 0 #1a1a2e,
+    inset -2px -2px 0 0 #3a3a6e,
+    -2px 0 0 0 #000,
+    2px 0 0 0 #000,
+    0 -2px 0 0 #000,
+    0 2px 0 0 #000;
+}
+
+.dialogue-input:focus {
+  box-shadow:
+    inset 2px 2px 0 0 #1a1a2e,
+    inset -2px -2px 0 0 #3a3a6e,
+    -2px 0 0 0 var(--pixel-cyan),
+    2px 0 0 0 var(--pixel-cyan),
+    0 -2px 0 0 var(--pixel-cyan),
+    0 2px 0 0 var(--pixel-cyan);
+}
+
+.dialogue-input::placeholder {
+  color: #6a6a8e;
+}
+
+.dialogue-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dialogue-send-btn {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 12px;
+  padding: 12px 20px;
+  background: var(--pixel-cyan);
+  color: #1a1a2e;
+  border: none;
+  cursor: pointer;
+  box-shadow:
+    inset -2px -2px 0 0 #3ebdb4,
+    inset 2px 2px 0 0 #5efdf4,
+    -2px 0 0 0 #000,
+    2px 0 0 0 #000,
+    0 -2px 0 0 #000,
+    0 2px 0 0 #000;
+  transition: all 0.1s;
+}
+
+.dialogue-send-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow:
+    inset -2px -2px 0 0 #3ebdb4,
+    inset 2px 2px 0 0 #5efdf4,
+    -2px 0 0 0 #000,
+    2px 0 0 0 #000,
+    0 -2px 0 0 #000,
+    0 4px 0 0 #000;
+}
+
+.dialogue-send-btn:active:not(:disabled) {
+  transform: translateY(2px);
+}
+
+.dialogue-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dialogue-mode-hint {
+  position: absolute;
+  top: -28px;
+  right: 16px;
+  font-size: 10px;
+  color: var(--pixel-purple);
+  background: rgba(0, 0, 0, 0.8);
+  padding: 4px 8px;
+}
