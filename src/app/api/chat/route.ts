@@ -3,13 +3,22 @@ import { NextRequest } from 'next/server'
 const API_KEY = 'ms-2a53f589-7f32-4df7-a086-cc381ef883bb'
 const BASE_URL = 'https://api-inference.modelscope.cn'
 
-// 重试配置
-const RETRY_CONFIG = {
-  maxRetries: 3,
-  baseDelay: 2000,
-  maxDelay: 15000,
-  backoffMultiplier: 2,
-}
+async function callWithRetry(messages: unknown[], retries = 3): Promise<Response> {
+  for (let i = 0; i < retries; i++) {
+    const response = await fetch(`${BASE_URL}/v1/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'ZhipuAI/GLM-4.7-Flash',
+        messages,
+        stream: true,
+        // 增加请求间隔，减少频率限制
+        temperature: 0.7,
+      }),
+    })
 
 // 计算延迟时间
 function calculateDelay(attempt: number): number {
@@ -22,52 +31,13 @@ function calculateDelay(attempt: number): number {
   return Math.max(1000, baseDelay + jitter * randomFactor)
 }
 
-// 判断是否可重试
-function isRetryableStatus(status: number): boolean {
-  return [429, 500, 502, 503, 504].includes(status)
-}
-
-// 带重试的流式 API 调用
-async function* callWithRetryStream(
-  messages: unknown[]
-): AsyncGenerator<string> {
-  let retries = RETRY_CONFIG.maxRetries
-
-  while (retries >= 0) {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 60000)
-
-    try {
-      const response = await fetch(`${BASE_URL}/v1/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: 'ZhipuAI/GLM-4.7-Flash',
-          messages,
-          stream: true,
-          temperature: 0.7,
-        }),
-        signal: controller.signal,
-      })
-
-      clearTimeout(timeoutId)
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => '')
-        
-        if (isRetryableStatus(response.status) && retries > 0) {
-          const delay = calculateDelay(RETRY_CONFIG.maxRetries - retries)
-          console.log(`Rate limited (${response.status}), retrying in ${Math.round(delay)}ms`)
-          await new Promise(resolve => setTimeout(resolve, delay))
-          retries--
-          continue
-        }
-
-        throw new Error(errorText || `API error: ${response.status}`)
-      }
+    // 如果 rate limited (429)，等待更长时间
+    if (response.status === 429 && i < retries - 1) {
+      const waitTime = (i + 1) * 5000 // 5s, 10s, 15s
+      console.log(`Rate limited, waiting ${waitTime}ms...`)
+      await new Promise(resolve => setTimeout(resolve, waitTime))
+      continue
+    }
 
       const reader = response.body?.getReader()
       if (!reader) {
