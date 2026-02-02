@@ -74,6 +74,7 @@ interface AppState {
   // NPCs
   npcs: NPC[]
   currentSpeakerId: string | null  // 当前发言的NPC ID
+  controlledNpcId: string | null  // 用户控制的NPC ID
   
   // Chat
   messages: Message[]
@@ -86,6 +87,8 @@ interface AppState {
   // UI
   isLoading: boolean
   error: string | null
+  errorCode: number | null  // 错误状态码
+  canRetry: boolean  // 是否可以重试
   showFeedback: boolean
   feedback: string | null
   
@@ -108,9 +111,12 @@ interface AppState {
   setMode: (mode: 'normal' | 'reversed') => void
   analyzeUserStyle: () => void
   setLoading: (isLoading: boolean) => void
-  setError: (error: string | null) => void
+  setError: (error: string | null, errorCode?: number) => void
+  setRetryState: (canRetry: boolean) => void
   setFeedback: (feedback: string | null) => void
   setShowFeedback: (show: boolean) => void
+  setControlledNpc: (npcId: string | null) => void
+  toggleControlledNpc: (npcId: string) => void
   reset: () => void
 }
 
@@ -124,12 +130,15 @@ const initialState = {
   imageStatus: 'idle' as const,
   npcs: [] as NPC[],
   currentSpeakerId: null as string | null,
+  controlledNpcId: null as string | null,
   messages: [],
   isTyping: false,
   mode: 'normal' as const,
   userPersona: null,
   isLoading: false,
   error: null,
+  errorCode: null as number | null,
+  canRetry: true,
   showFeedback: false,
   feedback: null,
 }
@@ -204,10 +213,18 @@ export const useStore = create<AppState>((set, get) => ({
   toggleMode: () => {
     const state = get()
     if (state.mode === 'normal') {
+      // 切换到反转模式：AI模仿用户说一句后自动恢复
+      // 不清空 controlledNpcId，用户继续控制自己的角色
       state.analyzeUserStyle()
-      set({ mode: 'reversed' })
+      set({ 
+        mode: 'reversed',
+        // controlledNpcId 保持不变，用户仍控制之前选定的角色
+      })
     } else {
-      set({ mode: 'normal' })
+      // 切换回正常模式
+      set({ 
+        mode: 'normal',
+      })
     }
   },
   
@@ -267,11 +284,24 @@ export const useStore = create<AppState>((set, get) => ({
   
   setLoading: (isLoading) => set({ isLoading }),
   
-  setError: (error) => set({ error }),
+  setError: (error, errorCode?: number) => set({ 
+    error, 
+    errorCode,
+    // 429 错误时可以重试，其他错误不建议立即重试
+    canRetry: errorCode === 429 
+  }),
+  
+  setRetryState: (canRetry) => set({ canRetry }),
   
   setFeedback: (feedback) => set({ feedback }),
   
   setShowFeedback: (show) => set({ showFeedback: show }),
+  
+  setControlledNpc: (npcId: string | null) => set({ controlledNpcId: npcId }),
+  
+  toggleControlledNpc: (npcId: string) => set((state) => ({
+    controlledNpcId: state.controlledNpcId === npcId ? null : npcId
+  })),
   
   reset: () => set(initialState),
 }))

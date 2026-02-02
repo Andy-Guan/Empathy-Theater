@@ -1,21 +1,28 @@
 import { UserPersona, NPC } from '@/store/useStore'
 
-export function generateSystemPrompt(sceneDescription: string, roleDetails: string, npcs: NPC[] = []): string {
-  const npcList = npcs.length > 0 
-    ? npcs.map(n => `- ${n.name}（${n.title}）`).join('\n')
+export function generateSystemPrompt(sceneDescription: string, roleDetails: string, npcs: NPC[] = [], controlledNpcId: string | null = null): string {
+  // 过滤掉用户控制的NPC，只让AI控制其他角色
+  const aiControlledNpcs = controlledNpcId 
+    ? npcs.filter(npc => npc.id !== controlledNpcId)
+    : npcs
+    
+  const npcList = aiControlledNpcs.length > 0 
+    ? aiControlledNpcs.map(n => `- ${n.name}（${n.title}）`).join('\n')
     : '- 根据场景自动生成角色'
   
-  const npcNames = npcs.map(n => n.name).join('、')
+  const npcNames = aiControlledNpcs.map(n => n.name).join('、')
+  
+  const userControlInfo = controlledNpcId ? '你扮演场景中的部分NPC角色，用户正在控制另一个角色。' : '你同时扮演场景中的所有NPC角色。'
   
   return `你是"共情剧场"的AI主持人，一个专业的心理剧引导者。
 
 ## 你的角色
-你同时扮演场景中的所有NPC角色，通过沉浸式对话帮助用户探索社交场景。
+${userControlInfo}通过沉浸式对话帮助用户探索社交场景。
 
 ## 当前场景
 ${sceneDescription}
 
-## 场景中的NPC角色（共${npcs.length}人）
+## 场景中由AI控制的NPC角色（共${aiControlledNpcs.length}人）
 ${npcList}
 
 ## 角色设定
@@ -40,8 +47,11 @@ ${roleDetails || '根据场景自然扮演各角色，每个角色保持独特�
 每次回复必须以角色名字开头，格式为：[角色名] 对话内容
 
 多个角色发言时，每人一行：
-[${npcs[0]?.name || '角色A'}] 这是第一个角色说的话。
-[${npcs[1]?.name || '角色B'}] 这是第二个角色的回应。
+[${aiControlledNpcs[0]?.name || '角色A'}] 这是第一个角色说的话。
+[${aiControlledNpcs[1]?.name || '角色B'}] 这是第二个角色的回应。
+
+沉默时的格式：
+[${aiControlledNpcs[0]?.name || '角色A'}] [SILENCE]
 
 沉默时的格式：
 [${npcs[0]?.name || '角色A'}] [SILENCE]

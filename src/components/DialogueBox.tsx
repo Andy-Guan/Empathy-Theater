@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, KeyboardEvent } from 'react'
 import { NPC, Message } from '@/store/useStore'
+import ChatInput from './ChatInput'
 
 interface DialogueBoxProps {
   currentMessage: Message | null
@@ -11,9 +12,14 @@ interface DialogueBoxProps {
   inputValue: string
   onInputChange: (value: string) => void
   onSend: (content: string) => void
+  onDialogueClick?: () => void  // 添加对话框点击回调
   disabled: boolean
   placeholder: string
   mode: 'normal' | 'reversed'
+  npcs?: Array<{ id: string; name: string; avatar: string }>
+  selectedNpcId?: string | null
+  onSelectNpc?: (npcId: string) => void
+  hasSentFirstMessage?: boolean
 }
 
 export default function DialogueBox({
@@ -24,9 +30,14 @@ export default function DialogueBox({
   inputValue,
   onInputChange,
   onSend,
+  onDialogueClick,
   disabled,
   placeholder,
   mode,
+  npcs = [],
+  selectedNpcId = null,
+  onSelectNpc,
+  hasSentFirstMessage = false,
 }: DialogueBoxProps) {
   const [displayedText, setDisplayedText] = useState('')
   
@@ -54,15 +65,6 @@ export default function DialogueBox({
     }
   }, [currentMessage])
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey && !disabled) {
-      e.preventDefault()
-      if (inputValue.trim()) {
-        onSend(inputValue)
-      }
-    }
-  }
-
   // 获取发言者信息
   const getSpeakerInfo = () => {
     if (isTyping && typingNpcName) {
@@ -70,6 +72,11 @@ export default function DialogueBox({
     }
     if (currentMessage) {
       if (currentMessage.role === 'user') {
+        // 解析用户消息中的角色名
+        const match = currentMessage.content.match(/^\[([^\]]+)\]/)
+        if (match) {
+          return { name: match[1], isUser: true }
+        }
         return { name: '你', isUser: true }
       }
       if (currentMessage.role === 'reversed-user') {
@@ -77,6 +84,9 @@ export default function DialogueBox({
       }
       if (currentMessage.role === 'npc' && currentNpc) {
         return { name: `${currentNpc.name}（${currentNpc.title}）`, isNpc: true }
+      }
+      if (currentMessage.role === 'system') {
+        return { name: '系统', isSystem: true }
       }
     }
     return null
@@ -86,22 +96,19 @@ export default function DialogueBox({
 
   return (
     <div className="dialogue-box">
-      {/* 发言者名字 */}
-      <div className="dialogue-speaker">
-        {speaker && (
-          <span className={`dialogue-speaker-name ${
-            speaker.isUser ? 'text-pixel-cyan' : 
-            speaker.isReversed ? 'text-pixel-purple' : 
-            'text-pixel-coral'
-          }`}>
-            {speaker.name}
-            {speaker.isTyping && <span className="ml-2 animate-pulse">...</span>}
-          </span>
-        )}
-      </div>
+      {/* 发言者信息 */}
+      {speaker && (
+        <div className={`dialogue-speaker ${speaker.isTyping ? 'typing' : ''} ${speaker.isUser ? 'user-speaker' : ''} ${speaker.isReversed ? 'reversed-speaker' : ''}`}>
+          <span className="speaker-name">{speaker.name}</span>
+          {speaker.isTyping && <span className="typing-indicator inline-flex ml-2"><span></span><span></span><span></span></span>}
+        </div>
+      )}
 
-      {/* 对话内容区域 */}
-      <div className="dialogue-content">
+      {/* 对话内容区域 - 可点击 */}
+      <div 
+        className={`dialogue-content ${onDialogueClick ? 'cursor-pointer hover:bg-white/5 transition-colors rounded-lg p-2 -mx-2' : ''}`}
+        onClick={onDialogueClick}
+      >
         {isTyping ? (
           <div className="dialogue-text">
             {displayedText || (
@@ -118,36 +125,47 @@ export default function DialogueBox({
           </div>
         ) : (
           <div className="dialogue-text text-gray-500">
-            等待对话开始...
+            等待消息...
+          </div>
+        )}
+
+        {/* 反转模式醒目的点击继续提示 */}
+        {mode === 'reversed' && !isTyping && onDialogueClick && (
+          <div className="mt-3 p-3 bg-gradient-to-r from-pixel-purple/30 to-pixel-cyan/20 border-2 border-pixel-purple rounded-lg animate-pulse">
+            <div className="flex items-center justify-center gap-2 text-pixel-cyan">
+              <span className="text-lg">👆</span>
+              <span className="font-bold text-sm">点击此处继续对话</span>
+              <span className="text-lg">👆</span>
+            </div>
+            <div className="text-center text-[10px] text-gray-400 mt-1">NPC正在等待你的回应</div>
           </div>
         )}
       </div>
 
-      {/* 用户输入区域 */}
-      <div className="dialogue-input-area">
-        <input
-          type="text"
-          className="dialogue-input"
-          value={inputValue}
-          onChange={(e) => onInputChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          disabled={disabled}
-        />
-        <button
-          className="dialogue-send-btn"
-          onClick={() => inputValue.trim() && onSend(inputValue)}
-          disabled={disabled || !inputValue.trim()}
-        >
-          发送
-        </button>
-      </div>
+      {/* 使用 ChatInput 组件替代内联输入框 */}
+      <ChatInput
+        value={inputValue}
+        onChange={onInputChange}
+        onSend={onSend}
+        disabled={disabled}
+        placeholder={placeholder}
+        npcs={npcs}
+        selectedNpcId={selectedNpcId}
+        onSelectNpc={onSelectNpc}
+        mode={mode}
+        hasSentFirstMessage={hasSentFirstMessage}
+      />
 
       {/* 模式提示 */}
       {mode === 'reversed' && (
-        <div className="dialogue-mode-hint">
-          <span className="text-pixel-gold">👁️</span> 旁观模式
-          <span className="text-xs text-gray-400 ml-2">[Ctrl+R 恢复控制]</span>
+        <div className="dialogue-mode-hint bg-pixel-purple/20 border border-pixel-purple/50">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">👁️</span>
+            <div className="flex flex-col">
+              <span className="text-xs text-pixel-purple font-bold">旁观模式 - AI正在模仿你</span>
+              <span className="text-[10px] text-gray-400 mt-0.5">点击对话框继续对话，或按 [Ctrl+R] 恢复控制</span>
+            </div>
+          </div>
         </div>
       )}
     </div>

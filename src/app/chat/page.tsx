@@ -19,14 +19,17 @@ export default function ChatPage() {
   const router = useRouter()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [inputValue, setInputValue] = useState('')
-  const [error, setError] = useState<string | null>(null)
   const [imageProgress, setImageProgress] = useState(0)
   const [typingNpc, setTypingNpc] = useState<string | null>(null)  // 当前正在输入的NPC名称
   const [showHistory, setShowHistory] = useState(false)  // 对话历史面板显示状态
   const [displayIndex, setDisplayIndex] = useState(0)  // 当前显示的消息索引
   const [isAutoPlaying, setIsAutoPlaying] = useState(false)  // 是否正在自动播放消息队列
+  const [isLoadingFeedback, setIsLoadingFeedback] = useState(false)  // 是否正在加载反馈
+  const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false)  // 用户是否已发送第一条消息
+  const [waitingForContinue, setWaitingForContinue] = useState(false)  // 反转模式下是否等待用户点击继续
   const greetingSent = useRef(false)
   const npcsInitialized = useRef(false)
+  const generateNpcResponseRef = useRef<(() => Promise<void>) | null>(null)
   
   const {
     sceneDescription,
@@ -42,6 +45,10 @@ export default function ChatPage() {
     feedback,
     npcs,
     currentSpeakerId,
+    controlledNpcId,
+    error: storeError,
+    errorCode,
+    canRetry,
     setBackgroundImage,
     setImageStatus,
     setNpcs,
@@ -56,6 +63,9 @@ export default function ChatPage() {
     setFeedback,
     setShowFeedback,
     setLoading,
+    setControlledNpc,
+    setError,
+    setRetryState,
     reset,
   } = useStore()
 
@@ -195,20 +205,32 @@ export default function ChatPage() {
     setIsAutoPlaying(true)
   }, [displayIndex, messages.length, isTyping])
 
-  // 点击对话框跳到下一条消息
+  // 点击对话框跳到下一条消息 或 继续对话
   const handleDialogueClick = () => {
-    if (displayIndex < messages.length - 1 && !isTyping) {
+    if (isTyping) return
+    
+    // 反转模式下等待用户点击继续
+    if (mode === 'reversed' && waitingForContinue) {
+      setWaitingForContinue(false)
+      if (generateNpcResponseRef.current) {
+        generateNpcResponseRef.current()
+      }
+      return
+    }
+    
+    // 正常模式下跳到下一条消息
+    if (displayIndex < messages.length - 1) {
       setDisplayIndex(prev => prev + 1)
     }
   }
 
-  // Initial NPC greeting
+  // Initial NPC greeting - 只有在用户选择了角色后才发送
   useEffect(() => {
-    if (sceneDescription && messages.length === 0 && !greetingSent.current) {
+    if (sceneDescription && messages.length === 0 && !greetingSent.current && controlledNpcId) {
       greetingSent.current = true
       sendInitialGreeting()
     }
-  }, [sceneDescription])
+  }, [sceneDescription, controlledNpcId])
 
   const streamResponse = async (
     apiMessages: Array<{ role: string; content: string }>,
@@ -361,7 +383,8 @@ export default function ChatPage() {
     
     // 获取最新的npcs状态
     const currentNpcs = useStore.getState().npcs
-    const systemPrompt = generateSystemPrompt(sceneDescription, roleDetails, currentNpcs)
+    const currentControlledNpcId = useStore.getState().controlledNpcId
+    const systemPrompt = generateSystemPrompt(sceneDescription, roleDetails, currentNpcs, currentControlledNpcId)
     const initPrompt = `场景已准备好。请让场景中的角色用简短的话开始这个场景，引导用户进入对话。记住格式：[角色名] 对话内容`
     
     try {
@@ -391,9 +414,7 @@ export default function ChatPage() {
       // 拆分多NPC消息
       finalizeNpcResponse()
     } catch (err) {
-      console.error('Initial greeting error:', err)
-      const errorMsg = err instanceof Error ? err.message : '连接失败'
-      setError(errorMsg)
+      const { errorMsg } = handleApiError(err, 'Initial greeting')
       // Update the last message with error
       useStore.setState((state) => ({
         messages: state.messages.map((msg, idx) =>
@@ -409,7 +430,7 @@ export default function ChatPage() {
     }
   }
 
-  const retryLastMessage = async () => {
+  const handleRetryLastMessage = async () => {
     // Remove the last error message and retry
     useStore.setState((state) => ({
       messages: state.messages.slice(0, -1),
@@ -422,15 +443,52 @@ export default function ChatPage() {
     }
   }
 
+  // 错误处理辅助函数
+  const handleApiError = (err: unknown, context: string) => {
+    console.error(`${context} error:`, err)
+    
+    // 尝试从错误消息中提取状态码
+    let errorMsg = '操作失败'
+    let errorCode: number | undefined
+    
+    if (err instanceof Error) {
+      // 解析错误消息中的状态码
+      const statusMatch = err.message.match(/(\d{3})/)
+      if (statusMatch) {
+        errorCode = parseInt(statusMatch[1], 10)
+      }
+      
+      // 根据错误类型设置友好的提示信息
+      if (err.message.includes('429') || err.message.includes('rate limit')) {
+        errorMsg = '请求过于频繁，请稍后重试'
+      } else if (err.message.includes('500')) {
+        errorMsg = '服务暂时不可用'
+      } else if (err.message.includes('timeout') || err.message.includes('abort')) {
+        errorMsg = '请求超时，请检查网络'
+      } else if (err.message.includes('fetch') || err.message.includes('network')) {
+        errorMsg = '网络错误，请检查连接'
+      } else {
+        errorMsg = err.message
+      }
+    }
+    
+    setError(errorMsg, errorCode)
+    return { errorMsg, errorCode }
+  }
+
   const sendMessage = useCallback(async (content: string) => {
-    if (!content.trim() || isTyping) return
+    if (!content.trim() || isTyping || !controlledNpcId) return
 
     setError(null)
-    // Add user message
-    addMessage({ role: 'user', content })
+    // Get the controlled NPC
+    const controlledNpc = npcs.find((npc) => npc.id === controlledNpcId)!
+    // Add user message with NPC name
+    addMessage({ role: 'user', content: `[${controlledNpc.name}] ${content}` })
     setInputValue('')
     setTyping(true)
     setTypingNpc('生成中...')
+    // 标记用户已发送第一条消息，锁定角色选择
+    setHasSentFirstMessage(true)
 
     // Build messages for API
     const systemPrompt = mode === 'reversed' && userPersona
@@ -441,7 +499,7 @@ export default function ChatPage() {
           messages.filter(m => m.role === 'user').slice(-3).map(m => m.content),
           npcs
         )
-      : generateSystemPrompt(sceneDescription, roleDetails, npcs)
+      : generateSystemPrompt(sceneDescription, roleDetails, npcs, controlledNpcId)
 
     const apiMessages = [
       { role: 'system' as const, content: systemPrompt },
@@ -451,7 +509,7 @@ export default function ChatPage() {
           : 'assistant') as 'user' | 'assistant',
         content: m.content,
       })),
-      { role: 'user' as const, content },
+      { role: 'user' as const, content: `[${controlledNpc.name}] ${content}` },
     ]
 
     try {
@@ -475,10 +533,14 @@ export default function ChatPage() {
 
       // 拆分多NPC消息
       finalizeNpcResponse()
+      
+      // 用户发言后，让AI控制的其他NPC做出回应
+      setTimeout(() => {
+        if (!useStore.getState().controlledNpcId) return
+        generateNPCResponse()
+      }, 800)
     } catch (err) {
-      console.error('Send message error:', err)
-      const errorMsg = err instanceof Error ? err.message : '发送失败'
-      setError(errorMsg)
+      const { errorMsg } = handleApiError(err, 'Send message')
       useStore.setState((state) => ({
         messages: state.messages.map((msg, idx) =>
           idx === state.messages.length - 1
@@ -592,8 +654,8 @@ export default function ChatPage() {
           ),
         }))
 
-        // Then get NPC response
-        setTimeout(() => generateNPCResponse(), 1000)
+        // 等待用户点击对话框后继续对话
+        setWaitingForContinue(true)
       } catch (error) {
         console.error('Reverse error:', error)
       } finally {
@@ -612,7 +674,8 @@ export default function ChatPage() {
     setTyping(true)
     setTypingNpc('生成中...')
     
-    const systemPrompt = generateSystemPrompt(sceneDescription, roleDetails, npcs)
+    const state = useStore.getState()
+    const systemPrompt = generateSystemPrompt(sceneDescription, roleDetails, npcs, state.controlledNpcId)
     const apiMessages = [
       { role: 'system' as const, content: systemPrompt },
       ...useStore.getState().messages.slice(-8).map((m) => ({
@@ -688,8 +751,16 @@ export default function ChatPage() {
     }
   }
 
+  // 保存 generateNPCResponse 的引用供其他回调使用
+  useEffect(() => {
+    generateNpcResponseRef.current = generateNPCResponse
+  }, [generateNPCResponse])
+
   const handleEndSession = async () => {
     setTyping(true)
+    setIsLoadingFeedback(true)
+    setShowFeedback(true)  // 立即显示反馈面板，但内容会显示加载中
+    setFeedback('分析中...')
     
     const feedbackPrompt = generateFeedbackPrompt(
       messages.map(m => ({ role: m.role, content: m.content })),
@@ -742,13 +813,14 @@ export default function ChatPage() {
       }
 
       setFeedback(fullContent)
-      setShowFeedback(true)
+      // setShowFeedback(true)  // 已在前面立即显示
     } catch (error) {
       console.error('Feedback error:', error)
       setFeedback('感谢你的参与！继续探索，发现更好的自己。')
-      setShowFeedback(true)
+      // setShowFeedback(true)  // 已在前面立即显示
     } finally {
       setTyping(false)
+      setIsLoadingFeedback(false)
     }
   }
 
@@ -978,9 +1050,14 @@ export default function ChatPage() {
           inputValue={inputValue}
           onInputChange={setInputValue}
           onSend={sendMessage}
-          disabled={isTyping || mode === 'reversed' || isAutoPlaying}
-          placeholder={isAutoPlaying ? '点击跳过...' : mode === 'reversed' ? '旁观模式中...' : '输入你的回复...'}
+          onDialogueClick={handleDialogueClick}
+          disabled={isTyping || isAutoPlaying}
+          placeholder={isAutoPlaying ? '点击跳过...' : mode === 'reversed' ? '旁观模式中，输入继续对话...' : '输入你的回复...'}
           mode={mode}
+          npcs={npcs}
+          selectedNpcId={controlledNpcId}
+          onSelectNpc={setControlledNpc}
+          hasSentFirstMessage={hasSentFirstMessage}
         />
       </div>
 
@@ -994,7 +1071,8 @@ export default function ChatPage() {
       {/* Feedback Panel */}
       {showFeedback && (
         <FeedbackPanel 
-          feedback={feedback || ''} 
+          feedback={feedback || ''}
+          isLoading={isLoadingFeedback}
           onClose={() => setShowFeedback(false)}
           onNewSession={handleNewSession}
         />
@@ -1044,11 +1122,11 @@ export default function ChatPage() {
       )}
 
       {/* Error and Retry */}
-      {error && !isTyping && (
+      {storeError && !isTyping && (
         <div className="fixed top-32 right-4 z-20">
           <button
             className="pixel-btn pixel-btn-gold text-sm py-2 px-4"
-            onClick={retryLastMessage}
+            onClick={handleRetryLastMessage}
           >
             🔄 重试
           </button>

@@ -20,9 +20,16 @@ async function callWithRetry(messages: unknown[], retries = 3): Promise<Response
       }),
     })
 
-    if (response.ok) {
-      return response
-    }
+// 计算延迟时间
+function calculateDelay(attempt: number): number {
+  const baseDelay = Math.min(
+    RETRY_CONFIG.baseDelay * Math.pow(RETRY_CONFIG.backoffMultiplier, attempt),
+    RETRY_CONFIG.maxDelay
+  )
+  const jitter = baseDelay * 0.3
+  const randomFactor = Math.random() * 2 - 1
+  return Math.max(1000, baseDelay + jitter * randomFactor)
+}
 
     // 如果 rate limited (429)，等待更长时间
     if (response.status === 429 && i < retries - 1) {
@@ -32,33 +39,86 @@ async function callWithRetry(messages: unknown[], retries = 3): Promise<Response
       continue
     }
 
-    return response
+      const reader = response.body?.getReader()
+      if (!reader) {
+        throw new Error('No response body')
+      }
+
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6)
+              if (data === '[DONE]') return
+
+              try {
+                const json = JSON.parse(data)
+                const content = json.choices?.[0]?.delta?.content
+                if (content) {
+                  yield content
+                }
+              } catch {
+                // Skip invalid JSON
+              }
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock()
+      }
+
+      return
+    } catch (error) {
+      if (retries > 0) {
+        const delay = calculateDelay(RETRY_CONFIG.maxRetries - retries)
+        console.log(`API error, retrying in ${Math.round(delay)}ms`)
+        await new Promise(resolve => setTimeout(resolve, delay))
+        retries--
+        continue
+      }
+      throw error
+    } finally {
+      clearTimeout(timeoutId)
+    }
   }
-  
-  throw new Error('Max retries exceeded')
 }
 
 export async function POST(request: NextRequest) {
   try {
     const { messages } = await request.json()
 
-    const response = await callWithRetry(messages)
+    const encoder = new TextEncoder()
+    let buffer = ''
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('API error:', response.status, errorText)
-      return new Response(
-        JSON.stringify({ 
-          error: response.status === 429 
-            ? 'API 请求过于频繁，请稍后重试' 
-            : `API 错误: ${response.status}` 
-        }),
-        { status: response.status, headers: { 'Content-Type': 'application/json' } }
-      )
-    }
+    // 创建自定义 TransformStream 来处理流式响应
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of callWithRetryStream(messages)) {
+            buffer += chunk
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: chunk } }] })}\n`))
+          }
+          controller.enqueue(encoder.encode('data: [DONE]\n'))
+          controller.close()
+        } catch (error) {
+          console.error('Stream error:', error)
+          const errorMsg = error instanceof Error ? error.message : '未知错误'
+          controller.error(error)
+        }
+      },
+    })
 
-    // Forward the stream
-    return new Response(response.body, {
+    return new Response(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -67,9 +127,29 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Chat API error:', error)
+    
+    let errorMessage = '服务器内部错误，请重试'
+    let statusCode = 500
+
+    if (error instanceof Error) {
+      if (error.message.includes('429')) {
+        errorMessage = 'API 请求过于频繁，请稍后重试'
+        statusCode = 429
+      } else if (error.message.includes('500')) {
+        errorMessage = '服务暂时不可用，请稍后重试'
+        statusCode = 500
+      } else if (error.message.includes('abort')) {
+        errorMessage = '请求超时，请检查网络连接'
+        statusCode = 408
+      }
+    }
+
     return new Response(
-      JSON.stringify({ error: '服务器内部错误，请重试' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: errorMessage }),
+      { 
+        status: statusCode, 
+        headers: { 'Content-Type': 'application/json' } 
+      }
     )
   }
 }
