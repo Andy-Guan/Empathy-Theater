@@ -1,0 +1,509 @@
+@import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@300;400;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-pixel-blue: #81c784;
+  --color-pixel-gold: #ffb74d;
+  --color-pixel-dark: #f1f8f1;
+  --color-pixel-cyan: #4db6ac;
+  --color-pixel-coral: #ef9a9a;
+  --color-pixel-purple: #ba68c8;
+}
+
+:root {
+  --pixel-blue: #81c784;
+  --pixel-gold: #ffb74d;
+  --pixel-dark: #f1f8f1;
+  --pixel-cyan: #4db6ac;
+  --pixel-coral: #ef9a9a;
+  --pixel-purple: #ba68c8;
+  --text-main: #2d3e2d;
+}
+
+* {
+  image-rendering: pixelated;
+}
+
+body {
+  font-family: 'Noto Sans SC', sans-serif;
+  background-color: var(--pixel-dark);
+  color: var(--text-main);
+  min-height: 100vh;
+}
+
+/* Pixel Border Effect - 改为柔和装饰线条 */
+.pixel-border {
+  position: relative;
+  background: white;
+  border: 2px solid var(--pixel-blue);
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+}
+
+/* Pixel Button - 改为柔和样式 */
+.pixel-btn {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 12px 24px;
+  background: var(--pixel-blue);
+  color: white;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  border-radius: 30px;
+  box-shadow: 0 4px 12px rgba(129, 199, 132, 0.3);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.pixel-btn:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 6px 18px rgba(129, 199, 132, 0.4);
+}
+
+.pixel-btn:active {
+  transform: translateY(1px);
+}
+
+.pixel-btn-gold {
+  background: var(--pixel-gold);
+  box-shadow: 0 4px 12px rgba(255, 183, 77, 0.3);
+  color: white;
+}
+
+.pixel-btn-purple {
+  background: var(--pixel-purple);
+  box-shadow:
+    inset -4px -4px 0 0 #7b4996,
+    inset 4px 4px 0 0 #bb79d6,
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 4px 0 0 #000;
+}
+
+.pixel-btn-coral {
+  background: var(--pixel-coral);
+  box-shadow:
+    inset -4px -4px 0 0 #d94b4b,
+    inset 4px 4px 0 0 #ff8b8b,
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 4px 0 0 #000;
+}
+
+/* Pixel Input */
+.pixel-input {
+  font-family: 'Noto Sans SC', sans-serif;
+  padding: 10px 16px;
+  background: #f9fdf9;
+  border: 2px solid #e0eee0;
+  border-radius: 12px;
+  color: var(--text-main);
+  transition: all 0.3s;
+  outline: none;
+}
+
+.pixel-input:focus {
+  border-color: var(--pixel-blue);
+  background: white;
+  box-shadow: 0 0 0 4px rgba(129, 199, 132, 0.1);
+}
+
+.pixel-input::placeholder {
+  color: #a0b0a0;
+}
+
+/* Message Bubbles */
+.pixel-bubble {
+  position: relative;
+  padding: 14px 18px;
+  max-width: 80%;
+  word-wrap: break-word;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.pixel-bubble-user {
+  background: var(--pixel-cyan);
+  color: #1a1a2e;
+  margin-left: auto;
+  box-shadow:
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 4px 0 0 #000,
+    inset -4px -4px 0 0 #3ebdb4,
+    inset 4px 4px 0 0 #5efdf4;
+}
+
+.pixel-bubble-npc {
+  background: var(--pixel-coral);
+  color: white;
+  margin-right: auto;
+  box-shadow:
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 4px 0 0 #000,
+    inset -4px -4px 0 0 #d94b4b,
+    inset 4px 4px 0 0 #ff8b8b;
+}
+
+.pixel-bubble-reversed {
+  background: var(--pixel-purple);
+  color: white;
+  margin-left: auto;
+  box-shadow:
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 4px 0 0 #000,
+    inset -4px -4px 0 0 #7b4996,
+    inset 4px 4px 0 0 #bb79d6;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+/* Typing indicator */
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  padding: 8px 16px;
+}
+
+.typing-indicator span {
+  width: 8px;
+  height: 8px;
+  background: var(--pixel-coral);
+  animation: typing 1s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--pixel-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--pixel-blue);
+  box-shadow:
+    inset -2px -2px 0 0 #2a5a8a,
+    inset 2px 2px 0 0 #6ab0f9;
+}
+
+/* Reversed mode banner */
+.reversed-banner {
+  background: var(--pixel-purple);
+  padding: 14px;
+  text-align: center;
+  font-size: 14px;
+  animation: blink-border 1s infinite;
+  box-shadow:
+    -4px 0 0 0 #000,
+    4px 0 0 0 #000,
+    0 -4px 0 0 #000,
+    0 4px 0 0 #000;
+}
+
+@keyframes blink-border {
+  0%, 100% { 
+    box-shadow:
+      -4px 0 0 0 var(--pixel-gold),
+      4px 0 0 0 var(--pixel-gold),
+      0 -4px 0 0 var(--pixel-gold),
+      0 4px 0 0 var(--pixel-gold);
+  }
+  50% { 
+    box-shadow:
+      -4px 0 0 0 #000,
+      4px 0 0 0 #000,
+      0 -4px 0 0 #000,
+      0 4px 0 0 #000;
+  }
+}
+
+/* Loading spinner */
+.pixel-loader {
+  width: 48px;
+  height: 48px;
+  position: relative;
+}
+
+.pixel-loader::before,
+.pixel-loader::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: var(--pixel-cyan);
+  animation: pixelLoad 1s infinite;
+}
+
+.pixel-loader::after {
+  animation-delay: 0.5s;
+  background: var(--pixel-coral);
+}
+
+@keyframes pixelLoad {
+  0% { top: 0; left: 0; }
+  25% { top: 0; left: 32px; }
+  50% { top: 32px; left: 32px; }
+  75% { top: 32px; left: 0; }
+  100% { top: 0; left: 0; }
+}
+
+/* Card/Panel */
+.pixel-panel {
+  background: white;
+  padding: 32px;
+  border-radius: 24px;
+  border: 2px solid #e0eee0;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.pixel-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, var(--pixel-blue), var(--pixel-cyan));
+}
+
+/* Title styling */
+.pixel-title {
+  font-family: 'Ma Shan Zheng', cursive;
+  font-size: 54px;
+  color: var(--pixel-blue);
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.05);
+  margin-bottom: 32px;
+  letter-spacing: 2px;
+}
+
+/* Textarea */
+.pixel-textarea {
+  font-family: 'Noto Sans SC', sans-serif;
+  padding: 14px 18px;
+  background: #f9fdf9;
+  border: 2px solid #e0eee0;
+  border-radius: 16px;
+  color: var(--text-main);
+  min-height: 120px;
+  transition: all 0.3s;
+  outline: none;
+  resize: none;
+}
+
+.pixel-textarea:focus {
+  border-color: var(--pixel-blue);
+  background: white;
+  box-shadow: 0 0 0 4px rgba(129, 199, 132, 0.1);
+}
+
+/* ========================================
+   Galgame风格 - NPC立绘
+   ======================================== */
+.npc-portrait {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateY(25%);
+  animation: portraitFadeIn 0.5s ease-out;
+}
+
+.npc-portrait-visible {
+  opacity: 1;
+}
+
+.npc-portrait-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.npc-portrait-image {
+  max-height: 50vh;
+  max-width: 80vw;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.5));
+  image-rendering: pixelated;
+}
+
+.npc-portrait-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  padding: 32px 48px;
+  border-radius: 20px;
+  border: 2px solid var(--pixel-blue);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+}
+
+.npc-portrait-emoji {
+  font-size: 8rem;
+  line-height: 1;
+  margin-bottom: 16px;
+}
+
+.npc-portrait-loading {
+  margin-top: 8px;
+}
+
+.npc-portrait-name {
+  position: absolute;
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--pixel-blue);
+  white-space: nowrap;
+  border-radius: 15px;
+  border: 2px solid var(--pixel-blue);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+@keyframes portraitFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(calc(25% + 20px));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(25%);
+  }
+}
+
+/* ========================================
+   Galgame风格 - 底部对话框
+   ======================================== */
+.dialogue-box {
+  position: relative;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(15px);
+  padding: 24px;
+  border-top: 2px solid var(--pixel-blue);
+  min-height: 200px;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.dialogue-speaker {
+  margin-bottom: 12px;
+}
+
+.dialogue-speaker-name {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Noto Sans SC', sans-serif;
+  padding: 6px 16px;
+  background: var(--pixel-dark);
+  color: var(--text-main);
+  display: inline-block;
+  border-radius: 20px;
+  border: 1px solid rgba(129, 199, 132, 0.3);
+}
+
+.dialogue-content {
+  background: #f9fdf9;
+  padding: 20px;
+  min-height: 80px;
+  margin-bottom: 16px;
+  border-radius: 16px;
+  border: 1px solid #e0eee0;
+}
+
+.dialogue-text {
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--text-main);
+  word-wrap: break-word;
+}
+
+.dialogue-input-area {
+  display: flex;
+  gap: 12px;
+}
+
+.dialogue-input {
+  flex: 1;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 14px;
+  padding: 12px 20px;
+  background: white;
+  color: var(--text-main);
+  border: 2px solid #e0eee0;
+  border-radius: 30px;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.dialogue-input:focus {
+  border-color: var(--pixel-blue);
+  box-shadow: 0 0 0 4px rgba(129, 199, 132, 0.1);
+}
+
+.dialogue-input::placeholder {
+  color: #a0b0a0;
+}
+
+.dialogue-send-btn {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 0 28px;
+  background: var(--pixel-blue);
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 30px;
+  box-shadow: 0 4px 12px rgba(129, 199, 132, 0.3);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.dialogue-send-btn:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 6px 18px rgba(129, 199, 132, 0.4);
+}
+
+.dialogue-mode-hint {
+  position: absolute;
+  top: -36px;
+  right: 24px;
+  font-size: 12px;
+  color: var(--pixel-purple);
+  background: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #ba68c8;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
