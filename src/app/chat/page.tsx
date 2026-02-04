@@ -538,7 +538,7 @@ export default function ChatPage() {
       setTimeout(() => {
         if (!useStore.getState().controlledNpcId) return
         generateNPCResponse()
-      }, 800)
+      }, 300)
     } catch (err) {
       const { errorMsg } = handleApiError(err, 'Send message')
       useStore.setState((state) => ({
@@ -585,7 +585,7 @@ export default function ChatPage() {
 
       const apiMessages = [
         { role: 'system' as const, content: reversedPrompt },
-        ...messages.slice(-6).map((m) => ({
+        ...messages.slice(-4).map((m) => ({
           role: (m.role === 'user' || m.role === 'reversed-user'
             ? 'user'
             : 'assistant') as 'user' | 'assistant',
@@ -593,7 +593,7 @@ export default function ChatPage() {
         })),
         { 
           role: 'user' as const, 
-          content: '请以用户的身份和风格，继续这段对话。记住要完全模仿用户的说话习惯。' 
+          content: '请以用户的身份和风格，简短地继续这段对话（一句话即可）。' 
         },
       ]
 

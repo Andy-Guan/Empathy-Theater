@@ -75,3 +75,7 @@ npm run start
 - Firefox 88+
 - Safari 14+
 - Edge 90+
+
+---
+
+*最后更新：2026-02-04*

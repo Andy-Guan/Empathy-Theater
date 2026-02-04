@@ -15,11 +15,11 @@ export class ApiError extends Error {
 
 // 重试配置
 const RETRY_CONFIG = {
-  maxRetries: 3,
-  baseDelay: 1000, // 基础延迟 1秒
-  maxDelay: 10000, // 最大延迟 10秒
-  backoffMultiplier: 2, // 指数退避倍率
-  jitter: 0.3, // 随机抖动范围 (30%)
+  maxRetries: 2,
+  baseDelay: 300, // 基础延迟 300ms
+  maxDelay: 2000, // 最大延迟 2秒
+  backoffMultiplier: 1.5, // 指数退避倍率
+  jitter: 0.2, // 随机抖动范围 (20%)
 }
 
 // 计算重试延迟时间（指数退避 + 随机抖动）
@@ -49,7 +49,7 @@ async function fetchWithRetry<T>(
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30秒超时
+      const timeoutId = setTimeout(() => controller.abort(), 15000) // 15秒超时
 
       const response = await fetch(url, {
         ...options,
@@ -123,7 +123,7 @@ export async function* streamChat(
 ): AsyncGenerator<string> {
   const createStream = async function* (): AsyncGenerator<string> {
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 60000) // 60秒超时
+    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30秒超时
 
     const response = await fetch(`${BASE_URL}/v1/chat/completions`, {
       method: 'POST',
@@ -266,8 +266,8 @@ export async function chat(
 class RequestQueue {
   private queue: Array<() => Promise<void>> = []
   private processing = 0
-  private readonly maxConcurrent = 2 // 最大并发数
-  private readonly minInterval = 1000 // 最小请求间隔(ms)
+  private readonly maxConcurrent = 3 // 最大并发数
+  private readonly minInterval = 200 // 最小请求间隔(ms)
 
   async add<T>(fn: () => Promise<T>): Promise<T> {
     return new Promise((resolve, reject) => {

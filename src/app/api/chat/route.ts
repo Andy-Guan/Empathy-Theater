@@ -3,24 +3,13 @@ import { NextRequest } from 'next/server'
 const API_KEY = 'ms-2a53f589-7f32-4df7-a086-cc381ef883bb'
 const BASE_URL = 'https://api-inference.modelscope.cn'
 
-async function callWithRetry(messages: unknown[], retries = 3): Promise<Response> {
-  for (let i = 0; i < retries; i++) {
-    const response = await fetch(`${BASE_URL}/v1/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'ZhipuAI/GLM-4.7-Flash',
-        messages,
-        stream: true,
-        // 增加请求间隔，减少频率限制
-        temperature: 0.7,
-      }),
-    })
+const RETRY_CONFIG = {
+  maxRetries: 2,
+  baseDelay: 500,
+  maxDelay: 3000,
+  backoffMultiplier: 1.5,
+}
 
-// 计算延迟时间
 function calculateDelay(attempt: number): number {
   const baseDelay = Math.min(
     RETRY_CONFIG.baseDelay * Math.pow(RETRY_CONFIG.backoffMultiplier, attempt),
@@ -31,13 +20,33 @@ function calculateDelay(attempt: number): number {
   return Math.max(1000, baseDelay + jitter * randomFactor)
 }
 
-    // 如果 rate limited (429)，等待更长时间
-    if (response.status === 429 && i < retries - 1) {
-      const waitTime = (i + 1) * 5000 // 5s, 10s, 15s
-      console.log(`Rate limited, waiting ${waitTime}ms...`)
-      await new Promise(resolve => setTimeout(resolve, waitTime))
-      continue
-    }
+async function* callWithRetryStream(messages: unknown[], retries = 3): AsyncGenerator<string> {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const response = await fetch(`${BASE_URL}/v1/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'ZhipuAI/GLM-4.7-Flash',
+          messages,
+          stream: true,
+          temperature: 0.7,
+        }),
+      })
+
+      if (response.status === 429 && attempt < retries - 1) {
+        const waitTime = (attempt + 1) * 1500
+        console.log(`Rate limited, waiting ${waitTime}ms...`)
+        await new Promise(resolve => setTimeout(resolve, waitTime))
+        continue
+      }
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
 
       const reader = response.body?.getReader()
       if (!reader) {
@@ -79,16 +88,13 @@ function calculateDelay(attempt: number): number {
 
       return
     } catch (error) {
-      if (retries > 0) {
-        const delay = calculateDelay(RETRY_CONFIG.maxRetries - retries)
+      if (attempt < retries - 1) {
+        const delay = calculateDelay(attempt)
         console.log(`API error, retrying in ${Math.round(delay)}ms`)
         await new Promise(resolve => setTimeout(resolve, delay))
-        retries--
         continue
       }
       throw error
-    } finally {
-      clearTimeout(timeoutId)
     }
   }
 }
@@ -98,21 +104,17 @@ export async function POST(request: NextRequest) {
     const { messages } = await request.json()
 
     const encoder = new TextEncoder()
-    let buffer = ''
 
-    // 创建自定义 TransformStream 来处理流式响应
     const stream = new ReadableStream({
       async start(controller) {
         try {
           for await (const chunk of callWithRetryStream(messages)) {
-            buffer += chunk
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: chunk } }] })}\n`))
           }
           controller.enqueue(encoder.encode('data: [DONE]\n'))
           controller.close()
         } catch (error) {
           console.error('Stream error:', error)
-          const errorMsg = error instanceof Error ? error.message : '未知错误'
           controller.error(error)
         }
       },
